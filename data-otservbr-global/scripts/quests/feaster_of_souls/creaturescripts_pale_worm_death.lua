@@ -1,25 +1,25 @@
-local config = {
-	centerPosition = Position(33805, 31504, 14),
-	rangeX = 11,
-	rangeY = 11,
-}
-
 local event = CreatureEvent("paleWormDeath")
 
-function event.onPrepareDeath(creature)
-	local spectators = Game.getSpectators(config.centerPosition, false, false, config.rangeX, config.rangeX, config.rangeY, config.rangeY)
-	for _, specCreature in pairs(spectators) do
-		if specCreature:isPlayer() then
-			if specCreature:getStorageValue(Storage.Quest.U12_30.PoltergeistOutfits.Received) == -1 then
-				specCreature:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Congratulations you received the Poltergeist Outfit.")
-				specCreature:addOutfit(1271, 0)
-				specCreature:addOutfit(1270, 0)
-				specCreature:setStorageValue(Storage.Quest.U12_30.PoltergeistOutfits.Received, 1)
+function event.onDeath(creature)
+	local state = PaleWormEncounter.state
+	if not state or state.bossId ~= creature:getId() then
+		return true
+	end
+	for _, entry in pairs(state.players) do
+		local player = PaleWormEncounter.player(entry)
+		if player and PaleWormEncounter.floor(player:getPosition()) then
+			if player:getStorageValue(Storage.Quest.U12_30.PoltergeistOutfits.Received) == -1 then
+				player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Congratulations you received the Poltergeist Outfit.")
+				player:addOutfit(1271, 0)
+				player:addOutfit(1270, 0)
+				player:setStorageValue(Storage.Quest.U12_30.PoltergeistOutfits.Received, 1)
 			end
-			specCreature:addAchievement("Beyonder")
+			player:setStorageValue(Storage.Quest.U12_30.FeasterOfSouls.PaleWormKilled, 1)
+			player:addAchievement("Beyonder")
 		end
 	end
-
+	-- BossDeath still needs the native reward statistics.
+	PaleWormEncounter.cleanup(false, true)
 	return true
 end
 
